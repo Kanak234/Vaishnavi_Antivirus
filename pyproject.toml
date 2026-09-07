@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vaishnavi-antivirus"
+version = "1.0.0"
+description = "Vaishnavi Antivirus - Cybersecurity Suite with signature detection, heuristics, quarantine, and system monitoring"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+vaishnavi-av = "vaishnavi_av.main:run"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["Vaishnavi_Antivirus_Full_GUI", "."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E402",
+    "E701",
+    "E702",
+    "E722",
+]

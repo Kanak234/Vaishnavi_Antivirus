@@ -1,8 +1,5 @@
-
 class KaliDefense:
     def destroy_threat(self, threat="Unknown Malware"):
         return (
-            "Kali Defense (Threat Neutralization)\n"
-            f"Threat Identified: {threat}\n"
-            "Action Taken: Eliminated Successfully."
+            f"Kali Defense (Threat Neutralization)\nThreat Identified: {threat}\nAction Taken: Eliminated Successfully."
         )

@@ -1,5 +1,7 @@
 """Simple heuristic checks to flag suspicious files."""
+
 from pathlib import Path
+
 
 def simple_heuristic(path: Path) -> bool:
     name = path.name.lower()

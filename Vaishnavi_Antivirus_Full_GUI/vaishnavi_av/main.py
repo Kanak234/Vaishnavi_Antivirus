@@ -1,7 +1,10 @@
 """CLI entrypoint for the modular antivirus package."""
+
 import argparse
+
 from .logger import setup_logger
 from .scanner import scan_path
+
 
 def run(argv=None):
     parser = argparse.ArgumentParser(prog="vaishnavi-av")
@@ -15,6 +18,7 @@ def run(argv=None):
     logger.info("Scan complete. %d findings.", len(findings))
     for f in findings:
         logger.info("Found: %s (%s)", f["path"], f["reason"])
+
 
 if __name__ == "__main__":
     run()

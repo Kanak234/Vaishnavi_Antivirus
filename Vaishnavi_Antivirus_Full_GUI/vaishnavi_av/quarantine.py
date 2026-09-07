@@ -1,7 +1,10 @@
 """Quarantine helpers (copies found files to quarantine_vault)."""
+
 import shutil
 from pathlib import Path
+
 from .config import QUARANTINE_DIR
+
 
 def move_to_quarantine(path: Path, logger=None) -> Path | None:
     dest = QUARANTINE_DIR / path.name

@@ -1,8 +1,11 @@
 """Core scanning engine (walks files, applies signature + heuristics)."""
+
 from pathlib import Path
-from .signatures import match
+
 from .heuristics import simple_heuristic
 from .quarantine import move_to_quarantine
+from .signatures import match
+
 
 def scan_path(target, logger=None, max_files=1000):
     p = Path(target)

@@ -1,5 +1,6 @@
 import logging
 
+
 def setup_logger(name="vaishnavi_av"):
     logger = logging.getLogger(name)
     if not logger.handlers:

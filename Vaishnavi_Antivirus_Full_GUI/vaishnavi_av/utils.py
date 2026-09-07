@@ -1,5 +1,7 @@
 """General utilities (placeholders for future helpers)."""
+
 from pathlib import Path
+
 
 def is_text_file(path: Path) -> bool:
     try:
