@@ -22,7 +22,9 @@ RUN adduser -D -u 10001 vaishnavi && \
     mkdir -p /app/quarantine_vault && \
     chown -R vaishnavi:vaishnavi /app
 
+ENV VAISHNAVI_QUARANTINE_DIR=/app/quarantine_vault
 USER vaishnavi
+
 
 ENTRYPOINT ["vaishnavi-av"]
 CMD ["--help"]
