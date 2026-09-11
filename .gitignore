@@ -19,6 +19,11 @@ wheels/
 .installed.cfg
 *.egg
 .pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 *.log
 vaishnavi_security.log
 quarantine_vault/
