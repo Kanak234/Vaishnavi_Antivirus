@@ -1,0 +1,11 @@
+.git/
+.github/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage/
+dist/
+build/
+*.egg-info/
+quarantine_vault/

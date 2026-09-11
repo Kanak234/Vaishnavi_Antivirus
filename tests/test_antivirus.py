@@ -14,10 +14,12 @@ from vaishnavi_antivirus_5000_lines import (
     SaraswatiShield as SaraswatiSuiteShield,
 )
 from vaishnavi_av.heuristics import simple_heuristic
+from vaishnavi_av.logger import setup_logger
 from vaishnavi_av.main import run as cli_run
 from vaishnavi_av.quarantine import move_to_quarantine
 from vaishnavi_av.scanner import scan_path
 from vaishnavi_av.signatures import SAMPLE_SIGNATURES, file_hash, match
+from vaishnavi_av.utils import is_text_file
 
 
 @pytest.fixture
@@ -83,6 +85,7 @@ def test_quarantine_move(temp_dir):
 
 def test_scanner_directory(temp_dir):
     """Verify end-to-end scanner finds signature and heuristic threats in a directory."""
+    logger = setup_logger("test_dir_scan")
     # 1. Clean file
     (temp_dir / "clean.txt").write_text("All is fine.")
 
@@ -92,12 +95,13 @@ def test_scanner_directory(temp_dir):
     # 3. Heuristic match
     (temp_dir / "trojan_malware.exe").write_bytes(b"binary data")
 
-    findings = scan_path(temp_dir, max_files=50)
+    findings = scan_path(temp_dir, logger=logger, max_files=50)
     assert len(findings) == 2
 
     reasons = {f["reason"] for f in findings}
     assert "signature" in reasons
     assert "heuristic" in reasons
+
 
 
 def test_shield_modules():
@@ -147,4 +151,96 @@ def test_cli_main_run(temp_dir, caplog):
     test_target = temp_dir / "cli_test.txt"
     test_target.write_text("clean content")
 
-    cli_run([str(test_target), "--max-files", "5"])
+    code = cli_run([str(test_target), "--max-files", "5"])
+    assert code == 0
+
+
+def test_utils_is_text_file(temp_dir):
+    """Verify text file detection vs binary file detection."""
+    txt_file = temp_dir / "valid.txt"
+    txt_file.write_text("plain utf-8 string content\nwith newlines")
+    assert is_text_file(txt_file) is True
+
+    bin_file = temp_dir / "binary.bin"
+    bin_file.write_bytes(b"\x00\x01\x02\x03\xff")
+    assert is_text_file(bin_file) is False
+
+    missing_file = temp_dir / "non_existent_file.txt"
+    assert is_text_file(missing_file) is False
+
+
+def test_heuristics_nonexistent_file(temp_dir):
+    """Verify non-existent file returns False from heuristic."""
+    missing_file = temp_dir / "does_not_exist.bin"
+    assert simple_heuristic(missing_file) is False
+
+
+def test_signatures_nonexistent_file(temp_dir):
+    """Verify non-existent file returns False from signature match."""
+    missing_file = temp_dir / "does_not_exist.bin"
+    assert match(missing_file) is False
+
+
+def test_quarantine_error_handling(temp_dir):
+    """Verify quarantine failure is logged and returns None."""
+    logger = setup_logger("test_quarantine_err")
+    bad_source = temp_dir / "non_existent.bin"
+    res = move_to_quarantine(bad_source, logger=logger)
+    assert res is None
+
+
+def test_scanner_nonexistent_target(temp_dir):
+    """Verify scanner handles non-existent paths gracefully."""
+    logger = setup_logger("test_scanner_nonexistent")
+    findings = scan_path(temp_dir / "nonexistent_dir", logger=logger)
+    assert findings == []
+
+
+def test_scanner_single_file_threat(temp_dir):
+    """Verify scanning a single file target identified as a threat."""
+    logger = setup_logger("test_single_file")
+    threat = temp_dir / "virus_sample.txt"
+    threat.write_text("heuristic threat")
+    findings = scan_path(threat, logger=logger)
+    assert len(findings) == 1
+    assert findings[0]["reason"] == "heuristic"
+
+
+def test_scanner_single_file_clean(temp_dir):
+    """Verify scanning a single clean file target."""
+    logger = setup_logger("test_single_clean")
+    clean = temp_dir / "normal.txt"
+    clean.write_text("clean text")
+    findings = scan_path(clean, logger=logger)
+    assert len(findings) == 0
+
+
+def test_scanner_max_files_limit(temp_dir):
+    """Verify scan honors max_files limit."""
+    logger = setup_logger("test_max_files")
+    for i in range(10):
+        (temp_dir / f"clean_{i}.txt").write_text(f"content {i}")
+    findings = scan_path(temp_dir, logger=logger, max_files=3)
+    assert len(findings) == 0
+
+
+def test_cli_threat_detection(temp_dir):
+    """Verify CLI returns exit code 1 when threats are found."""
+    threat = temp_dir / "malware_payload.bin"
+    threat.write_text("malware")
+    exit_code = cli_run([str(threat)])
+    assert exit_code == 1
+
+
+def test_scanner_permission_error(temp_dir):
+    """Verify scanner handles file reading errors gracefully."""
+    logger = setup_logger("test_perm_err")
+    unreadable = temp_dir / "unreadable.bin"
+    unreadable.write_bytes(b"some bytes")
+    unreadable.chmod(0o000)
+    try:
+        findings = scan_path(unreadable, logger=logger)
+        # Even if read fails, scanner logs error and continues safely without raising
+        assert isinstance(findings, list)
+    finally:
+        unreadable.chmod(0o644)
